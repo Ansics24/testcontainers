@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -17,7 +18,10 @@ class TaskListServiceTest {
     @Container
     private GenericContainer postgres =
             new GenericContainer(DockerImageName.parse("postgres:12.12")).withEnv("POSTGRES_USER", "postgres")
-                    .withEnv("POSTGRES_PASSWORD", "postgres").withEnv("POSTGRES_DB", "tasklist")
+                    .withEnv("POSTGRES_PASSWORD", "postgres")
+                    .withEnv("POSTGRES_DB", "tasklist")
+                    .withClasspathResourceMapping("PostgresInit.sql", "/docker-entrypoint-initdb.d/Init.sql",
+                            BindMode.READ_ONLY)
                     .withExposedPorts(5432);
 
     private TaskListService serviceUnderTest;
