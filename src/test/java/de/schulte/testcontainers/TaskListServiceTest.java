@@ -6,13 +6,13 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
+import org.testcontainers.images.builder.ImageFromDockerfile;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -23,16 +23,7 @@ import com.zaxxer.hikari.HikariDataSource;
 class TaskListServiceTest {
 
     @Container
-    private GenericContainer postgres =
-            new GenericContainer(DockerImageName.parse("postgres:12.12")).withEnv("POSTGRES_USER", "postgres")
-                    .withEnv("POSTGRES_PASSWORD", "postgres")
-                    .withEnv("POSTGRES_DB", "tasklist")
-                    .withClasspathResourceMapping("PostgresInit.sql", "/docker-entrypoint-initdb.d/Init.sql",
-                            BindMode.READ_ONLY)
-                    .withExposedPorts(5432)
-                    .waitingFor(new WaitAllStrategy()
-                            .withStrategy(Wait.forLogMessage(".*is ready to accept connections.*", 1))
-                            .withStrategy(Wait.defaultWaitStrategy()));
+    private GenericContainer postgres = new TasklistPostgresContainer();
 
     @Container
     private GenericContainer nginx =
