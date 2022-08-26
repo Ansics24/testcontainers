@@ -25,17 +25,14 @@ import com.zaxxer.hikari.HikariDataSource;
 class TaskListServiceTest {
 
     @Container
-    private DockerComposeContainer environment = new DockerComposeContainer(
-            new File("src/test/resources/docker-compose.yml"))
-            .withExposedService("postgres", 5432)
-            .withExposedService("nginx", 80);
+    private TasklistPostgresContainer postgres = new TasklistPostgresContainer();
 
     private TaskListService serviceUnderTest;
 
     @BeforeEach
     void setUp() {
-        final var postgresHost = environment.getServiceHost("postgres", 5432);
-        final var postgresPort = environment.getServicePort("postgres", 5432);
+        final var postgresHost = postgres.getHost();
+        final var postgresPort = postgres.getFirstMappedPort();
         final var postgresUrl = String.format("jdbc:postgresql://%s:%d/tasklist", postgresHost, postgresPort);
 
         final var dataSource = new HikariDataSource();
