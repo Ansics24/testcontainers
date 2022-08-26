@@ -15,6 +15,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.output.ToStringConsumer;
 import org.testcontainers.containers.output.WaitingConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -33,7 +35,10 @@ class TaskListServiceTest {
                     .withEnv("POSTGRES_DB", "tasklist")
                     .withClasspathResourceMapping("PostgresInit.sql", "/docker-entrypoint-initdb.d/Init.sql",
                             BindMode.READ_ONLY)
-                    .withExposedPorts(5432);
+                    .withExposedPorts(5432)
+                    .waitingFor(new WaitAllStrategy()
+                            .withStrategy(Wait.forLogMessage(".*is ready to accept connections.*", 1))
+                            .withStrategy(Wait.defaultWaitStrategy()));
 
     private TaskListService serviceUnderTest;
 
