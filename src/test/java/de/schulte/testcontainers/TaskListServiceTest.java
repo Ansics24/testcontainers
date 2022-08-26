@@ -2,12 +2,14 @@ package de.schulte.testcontainers;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.io.File;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -23,24 +25,21 @@ import com.zaxxer.hikari.HikariDataSource;
 class TaskListServiceTest {
 
     @Container
-    private GenericContainer postgres = new TasklistPostgresContainer();
-
-    @Container
-    private GenericContainer nginx =
-            new GenericContainer(DockerImageName.parse("nginx:1.23")).withExposedPorts(80).dependsOn(postgres);
+    private DockerComposeContainer environment = new DockerComposeContainer(
+            new File("src/test/resources/docker-compose.yml"))
+            .withExposedService("postgres", 5432)
+            .withExposedService("nginx", 80);
 
     private TaskListService serviceUnderTest;
 
     @BeforeEach
-    void followContainerLogs() throws TimeoutException {
-        postgres.followOutput(new Slf4jLogConsumer(LoggerFactory.getLogger("Postgres Logger")));
-        nginx.followOutput(new Slf4jLogConsumer(LoggerFactory.getLogger("Nginx Logger")));
-    }
-
-    @BeforeEach
     void setUp() {
+        final var postgresHost = environment.getServiceHost("postgres", 5432);
+        final var postgresPort = environment.getServicePort("postgres", 5432);
+        final var postgresUrl = String.format("jdbc:postgresql://%s:%d/tasklist", postgresHost, postgresPort);
+
         final var dataSource = new HikariDataSource();
-        dataSource.setJdbcUrl("jdbc:postgresql://localhost:" + postgres.getMappedPort(5432) + "/tasklist");
+        dataSource.setJdbcUrl(postgresUrl);
         dataSource.setUsername("postgres");
         dataSource.setPassword("postgres");
         serviceUnderTest = new TaskListService(dataSource);
